@@ -25,7 +25,7 @@ module.exports = async function handler(req, res) {
           { text: prompt }
         ]
       }],
-      generationConfig: { temperature: 0.1, maxOutputTokens: 1000 }
+      generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
     });
 
     const result = await new Promise((resolve, reject) => {
