@@ -59,10 +59,30 @@ module.exports = async function handler(req, res) {
       return res.status(result.status).json({ error: parsed });
     }
 
-    const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    let text = parsed.candidates?.[0]?.content?.parts?.[0]?.text || '';
     if (!text) return res.status(500).json({ error: 'Réponse vide de Gemini', raw: JSON.stringify(parsed).substring(0, 300) });
 
-    return res.status(200).json({ text });
+    // Nettoyer la réponse de Gemini
+    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    // Vérifier que c'est du JSON valide
+    let resultJson;
+    try {
+      resultJson = JSON.parse(text);
+    } catch (e) {
+      // Tenter de corriger les apostrophes mal placées
+      try {
+        const fixed = text
+          .replace(/'/g, '"')
+          .replace(/(\w+)":/g, '"$1":')
+          .replace(/:\s*"([^"]*)"([^,}\]])/g, ': "$1"$2');
+        resultJson = JSON.parse(fixed);
+      } catch (e2) {
+        return res.status(500).json({ error: 'JSON invalide', raw: text.substring(0, 300) });
+      }
+    }
+
+    return res.status(200).json({ text: JSON.stringify(resultJson) });
 
   } catch (e) {
     return res.status(500).json({ error: e.message || 'Erreur inconnue', type: e.constructor.name });
