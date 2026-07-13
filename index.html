@@ -657,7 +657,7 @@
               <div class="dt-icon">🚗</div>
               <div class="dt-label">Permis de conduire</div>
             </div>
-            <div class="doc-type-btn" onclick="selectDocType(this, 'carte nationale d'identité')" data-type="cni">
+            <div class="doc-type-btn" onclick="selectDocType(this, 'carte nationale identite')" data-type="cni">
               <div class="dt-icon">🪪</div>
               <div class="dt-label">CNI</div>
             </div>
@@ -830,8 +830,8 @@
     const prompt = module === 'medi'
       ? `Tu es VÉRIF-CM. Analyse ce médicament. Sois TRÈS CONCIS, maximum 2 éléments par tableau. Réponds UNIQUEMENT avec ce JSON sur une seule ligne sans saut de ligne:
 {"verdict":"AUTHENTIQUE","nom_produit":"nom","fabricant":"fabricant","numero_lot":"lot","date_peremption":"date","pays_origine":"pays","elements_securite":["el1","el2"],"anomalies":[],"score_confiance":85,"alerte_autorites":false,"conseil":"conseil bref"}`
-      : `Tu es VÉRIF-CM. Analyse ce ${selectedDocType}. Verdict: AUTHENTIQUE, SUSPECT ou FALSIFIE. Limite chaque texte a 20 caracteres max. Reponds UNIQUEMENT avec ce JSON minimaliste sur une seule ligne:
-{"verdict":"AUTHENTIQUE","type_document":"${selectedDocType}","institution":"institut","titulaire":"nom","reference":"ref","date":"date","securite":["el1"],"anomalies":[],"score":80,"alerte":false,"conseil":"bref conseil"}`;
+      : `Tu es VERIF-CM. Analyse ce ${selectedDocType}. Reponds verdict AUTHENTIQUE SUSPECT ou FALSIFIE. Max 1 element par tableau. Max 12 caracteres par valeur texte. JSON compact UNE SEULE LIGNE sans espaces:
+{"verdict":"AUTHENTIQUE","type":"${selectedDocType}","inst":"nom","tit":"nom","ref":"ref","dt":"date","sec":["el1"],"ano":[],"sc":80,"al":false,"cs":"conseil"}`;
 
     try {
       const response = await fetch('/api/analyze', {
@@ -902,18 +902,18 @@
       ]);
     } else {
       rows = buildRows([
-        ['Type', r.type_document],
-        ['Institution', r.institution_emettrice || r.institution],
-        ['Titulaire', r.titulaire],
-        ['Référence', r.numero_reference || r.reference],
-        ['Date d\'émission', r.date_emission || r.date],
-        ['Score d\'authenticité', (r.score_authenticite || r.score) + '%'],
+        ['Type', r.type_document || r.type],
+        ['Institution', r.institution_emettrice || r.institution || r.inst],
+        ['Titulaire', r.titulaire || r.tit],
+        ['Référence', r.numero_reference || r.reference || r.ref],
+        ['Date d\'émission', r.date_emission || r.date || r.dt],
+        ['Score d\'authenticité', (r.score_authenticite || r.score || r.sc) + '%'],
       ]);
     }
 
-    const securite = (isMedi ? r.elements_securite : (r.elements_securite_presents || r.securite)) || [];
-    const anomalies = r.anomalies || [];
-    const alerte = r.alerte_autorites || r.alerte || false;
+    const securite = (isMedi ? r.elements_securite : (r.elements_securite_presents || r.securite || r.sec)) || [];
+    const anomalies = r.anomalies || r.ano || [];
+    const alerte = r.alerte_autorites || r.alerte || r.al || false;
 
     let securiteHtml = securite.length
       ? `<div class="result-details" style="margin-bottom:10px;">
