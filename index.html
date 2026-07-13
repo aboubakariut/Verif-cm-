@@ -865,6 +865,9 @@
     const verdict = r.verdict;
     const score = isMedi ? r.score_confiance : r.score_authenticite;
 
+    const verdictNorm = (verdict || '').toUpperCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
     let verdictClass = 'verdict-authentic';
     let icon = '✅';
     let label = verdict;
@@ -872,13 +875,13 @@
       ? 'Ce médicament est référencé dans la base nationale des produits homologués.'
       : 'Ce document présente tous les éléments de sécurité attendus.';
 
-    if (verdict === 'SUSPECT') {
+    if (verdictNorm === 'SUSPECT') {
       verdictClass = 'verdict-suspect';
       icon = '⚠️';
       desc = isMedi
         ? 'Des anomalies ont été détectées. Évitez de consommer ce médicament sans vérification complémentaire.'
         : 'Des éléments suspects ont été détectés sur ce document. Vérification complémentaire recommandée.';
-    } else if (verdict === 'CONTREFAIT' || verdict === 'FALSIFIÉ') {
+    } else if (verdictNorm === 'CONTREFAIT' || verdictNorm === 'FALSIFIE' || verdictNorm === 'FAUX') {
       verdictClass = 'verdict-fake';
       icon = '❌';
       desc = isMedi
