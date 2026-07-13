@@ -828,8 +828,8 @@
     showSection(module, 'loading');
 
     const prompt = module === 'medi'
-      ? `Tu es VÉRIF-CM. Analyse ce médicament. Sois TRÈS CONCIS, maximum 2 éléments par tableau. Réponds UNIQUEMENT avec ce JSON sur une seule ligne sans saut de ligne:
-{"verdict":"AUTHENTIQUE","nom_produit":"nom","fabricant":"fabricant","numero_lot":"lot","date_peremption":"date","pays_origine":"pays","elements_securite":["el1","el2"],"anomalies":[],"score_confiance":85,"alerte_autorites":false,"conseil":"conseil bref"}`
+      ? `Tu es VÉRIF-CM. Analyse cette image. Si c'est un médicament reponds avec verdict AUTHENTIQUE SUSPECT ou CONTREFAIT. Si ce n'est pas un médicament reponds verdict SUSPECT. Maximum 1 element par tableau. Max 12 caracteres par valeur. JSON compact UNE SEULE LIGNE:
+{"verdict":"AUTHENTIQUE","nom":"nommed","fab":"fabricant","lot":"lot","exp":"date","pays":"pays","sec":["el1"],"ano":[],"sc":85,"al":false,"cs":"conseil"}`
       : `Tu es VERIF-CM. Analyse ce ${selectedDocType}. Reponds verdict AUTHENTIQUE SUSPECT ou FALSIFIE. Max 1 element par tableau. Max 12 caracteres par valeur texte. JSON compact UNE SEULE LIGNE sans espaces:
 {"verdict":"AUTHENTIQUE","type":"${selectedDocType}","inst":"nom","tit":"nom","ref":"ref","dt":"date","sec":["el1"],"ano":[],"sc":80,"al":false,"cs":"conseil"}`;
 
@@ -875,9 +875,10 @@
       ? 'Ce médicament est référencé dans la base nationale des produits homologués.'
       : 'Ce document présente tous les éléments de sécurité attendus.';
 
-    if (verdictNorm === 'SUSPECT') {
+    if (verdictNorm === 'SUSPECT' || verdictNorm === 'NON_APPLICABLE' || verdictNorm === 'NONAPPLICABLE') {
       verdictClass = 'verdict-suspect';
       icon = '⚠️';
+      label = 'SUSPECT';
       desc = isMedi
         ? 'Des anomalies ont été détectées. Évitez de consommer ce médicament sans vérification complémentaire.'
         : 'Des éléments suspects ont été détectés sur ce document. Vérification complémentaire recommandée.';
@@ -893,12 +894,12 @@
     let rows = '';
     if (isMedi) {
       rows = buildRows([
-        ['Produit', r.nom_produit],
-        ['Fabricant', r.fabricant],
-        ['Numéro de lot', r.numero_lot],
-        ['Date de péremption', r.date_peremption],
-        ['Pays d\'origine', r.pays_origine],
-        ['Score de confiance', (r.score_confiance || r.score) + '%'],
+        ['Produit', r.nom_produit || r.nom],
+        ['Fabricant', r.fabricant || r.fab],
+        ['Numéro de lot', r.numero_lot || r.lot],
+        ['Date de péremption', r.date_peremption || r.exp],
+        ['Pays d\'origine', r.pays_origine || r.pays],
+        ['Score de confiance', (r.score_confiance || r.sc || 0) + '%'],
       ]);
     } else {
       rows = buildRows([
@@ -911,7 +912,7 @@
       ]);
     }
 
-    const securite = (isMedi ? r.elements_securite : (r.elements_securite_presents || r.securite || r.sec)) || [];
+    const securite = (isMedi ? (r.elements_securite || r.sec) : (r.elements_securite_presents || r.securite || r.sec)) || [];
     const anomalies = r.anomalies || r.ano || [];
     const alerte = r.alerte_autorites || r.alerte || r.al || false;
 
@@ -944,7 +945,7 @@
       ${securiteHtml}
       ${anomaliesHtml}
       ${alertHtml}
-      ${r.conseil ? `<div class="alert-box" style="margin-top:12px;">💡 <span>${r.conseil}</span></div>` : ''}
+      ${(r.conseil || r.cs) ? `<div class="alert-box" style="margin-top:12px;">💡 <span>${r.conseil || r.cs}</span></div>` : ''}
       <button class="btn-reset" onclick="resetUpload('${module}')">🔄 Nouvelle vérification</button>
     `;
   }
