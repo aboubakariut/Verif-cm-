@@ -23,7 +23,7 @@ module.exports = async function handler(req, res) {
           { text: prompt }
         ]
       }],
-      generationConfig: { temperature: 0.1, maxOutputTokens: 4096 }
+      generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
     });
 
     const result = await new Promise((resolve, reject) => {
@@ -87,8 +87,8 @@ module.exports = async function handler(req, res) {
     }
 
     // Tronquer les valeurs trop longues pour éviter l'affichage bizarre
-    if (resultJson.cs && resultJson.cs.length > 80) {
-      resultJson.cs = resultJson.cs.substring(0, 77) + '...';
+    if (resultJson.cs && resultJson.cs.length > 150) {
+      resultJson.cs = resultJson.cs.substring(0, 147) + '...';
     }
 
     return res.status(200).json({ text: JSON.stringify(resultJson) });
