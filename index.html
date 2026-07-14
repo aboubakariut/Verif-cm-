@@ -475,10 +475,10 @@
     showSection(module, 'loading');
 
     const prompt = module === 'medi'
-      ? `Tu es VERIF-CM. Analyse cette image. Si medicament: verdict AUTHENTIQUE SUSPECT ou CONTREFAIT. Sinon: verdict SUSPECT. Reponds en francais uniquement. Max 1 element par tableau. Max 12 caracteres par valeur. JSON UNE SEULE LIGNE:
-{"verdict":"AUTHENTIQUE","nom":"nommed","fab":"fabricant","lot":"lot","exp":"date","pays":"pays","sec":["el1"],"ano":[],"sc":85,"al":false,"cs":"conseil en francais"}`
-      : `Tu es VERIF-CM. Analyse ce ${selectedDocType}. Verdict: AUTHENTIQUE SUSPECT ou FALSIFIE. Reponds en francais uniquement. Max 1 element par tableau. Max 12 caracteres par valeur. JSON UNE SEULE LIGNE:
-{"verdict":"AUTHENTIQUE","type":"${selectedDocType}","inst":"nom","tit":"nom","ref":"ref","dt":"date","sec":["el1"],"ano":[],"sc":80,"al":false,"cs":"conseil en francais"}`;
+      ? `Tu es VERIF-CM. Analyse cette image. Si medicament: verdict AUTHENTIQUE SUSPECT ou CONTREFAIT. Sinon: verdict SUSPECT. Reponds en francais. Max 1 element par tableau. Max 10 car par valeur. Conseil max 20 car. JSON UNE LIGNE:
+{"verdict":"AUTHENTIQUE","nom":"nom","fab":"fab","lot":"lot","exp":"date","pays":"pays","sec":["s1"],"ano":[],"sc":85,"al":false,"cs":"conseil court"}`
+      : `Tu es VERIF-CM. Analyse ce document. Verdict: AUTHENTIQUE SUSPECT ou FALSIFIE. Reponds en francais. Max 1 element par tableau. Max 10 car par valeur. Conseil max 20 car. JSON UNE LIGNE:
+{"verdict":"AUTHENTIQUE","type":"${selectedDocType}","inst":"inst","tit":"nom","ref":"ref","dt":"date","sec":["s1"],"ano":[],"sc":80,"al":false,"cs":"conseil court"}`;
 
     try {
       const response = await fetch('/api/analyze', {
@@ -495,9 +495,27 @@
       }
 
       const data = await response.json();
-      const text = (data.text || '').replace(/```json|```/g, '').trim();
+      let text = (data.text || '').replace(/```json|```/g, '').trim();
       if (!text) throw new Error('Réponse vide de l\'IA');
-      const result = JSON.parse(text);
+
+      // Tentative de réparation si JSON tronqué
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch(e) {
+        // Couper au dernier champ complet et fermer le JSON
+        const lastComma = text.lastIndexOf(',"');
+        if (lastComma > 0) {
+          text = text.substring(0, lastComma) + '}';
+        } else {
+          text = text + '""}';
+        }
+        try {
+          result = JSON.parse(text);
+        } catch(e2) {
+          throw new Error('JSON invalide même après réparation');
+        }
+      }
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
       incrementCounter();
       displayResult(module, result, elapsed);
