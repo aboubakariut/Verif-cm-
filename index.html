@@ -477,7 +477,7 @@
     const prompt = module === 'medi'
       ? `Tu es VERIF-CM, plateforme camerounaise de verification de medicaments. Analyse cette image. Si c'est un medicament: donne verdict AUTHENTIQUE SUSPECT ou CONTREFAIT avec tous les details visibles. Si ce n'est pas un medicament: verdict SUSPECT, anomalie "Image non medicamenteuse". Reponds UNIQUEMENT en JSON valide sur une seule ligne sans saut de ligne, en francais:
 {"verdict":"AUTHENTIQUE","nom":"nom complet produit","fab":"fabricant","lot":"numero lot","exp":"date peremption","pays":"pays origine","sec":["element securite 1"],"ano":[],"sc":85,"al":false,"cs":"conseil utile"}`
-      : `Tu es VERIF-CM, plateforme camerounaise de verification de documents officiels. Analyse ce document de type ${selectedDocType}. Si ce n'est pas ce type de document: verdict SUSPECT, anomalie "Type incorrect". Donne verdict AUTHENTIQUE SUSPECT ou FALSIFIE. Reponds UNIQUEMENT en JSON valide sur une seule ligne sans saut de ligne, en francais:
+      : `Tu es VERIF-CM, plateforme camerounaise de verification de documents officiels. Analyse ce document de type ${selectedDocType}. IMPORTANT: si l'image n'est pas un ${selectedDocType}, mets verdict SUSPECT, anomalie "Type de document incorrect", al false. Si c'est bien un ${selectedDocType}: donne verdict AUTHENTIQUE SUSPECT ou FALSIFIE selon les elements de securite. Reponds UNIQUEMENT en JSON valide sur une seule ligne sans saut de ligne, en francais:
 {"verdict":"AUTHENTIQUE","type":"${selectedDocType}","inst":"institution emettrice","tit":"nom titulaire","ref":"numero reference","dt":"date emission","sec":["element securite 1"],"ano":[],"sc":80,"al":false,"cs":"conseil utile"}`;
 
     try {
@@ -599,11 +599,20 @@
         ${ano.map(a => `<div class="detail-row"><span class="detail-val" style="text-align:left;color:var(--red);">✗ ${a}</span></div>`).join('')}
       </div>` : '';
 
-    // Alerte reformulée — à signaler, pas "transmise"
-    const alerteHtml = alerte ? `
-      <div class="alert-box sent" style="margin-top:10px;">
-        🚨 <span>À signaler au ${isMedi ? 'Ministère de la Santé (DGSPS)' : 'Ministère compétent'}. Contactez les autorités sanitaires de votre région.</span>
-      </div>` : '';
+    // Alerte uniquement si al=true ET verdict grave
+    const alerteHtml = (alerte && ['CONTREFAIT','FALSIFIE','FALSIFIÉ'].includes(verdictNorm))
+      ? `<div class="alert-box sent" style="margin-top:10px;">
+          🚨 <span><b>À signaler aux autorités :</b> ${isMedi
+            ? 'Contactez la Direction de la Pharmacie et du Médicament (DGSPS) — Ministère de la Santé Publique.'
+            : 'Contactez le service compétent : ' + (
+                selectedDocType === 'diplome' ? 'Ministère de l\'Enseignement Supérieur (MINESUP)' :
+                selectedDocType === 'acte de naissance' ? 'Centre d\'État Civil compétent — MINADT' :
+                selectedDocType === 'permis de conduire' ? 'Direction Générale des Transports — MINTRANSPORT' :
+                selectedDocType === 'carte nationale identite' ? 'Délégation Générale à la Sûreté Nationale (DGSN)' :
+                'Ministère compétent selon le type de document'
+              )
+          }</span>
+        </div>` : '';
 
     const conseilHtml = conseil ? `
       <div class="alert-box warn" style="margin-top:10px;">💡 <span>${conseil}</span></div>` : '';
