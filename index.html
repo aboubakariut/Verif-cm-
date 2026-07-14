@@ -475,10 +475,10 @@
     showSection(module, 'loading');
 
     const prompt = module === 'medi'
-      ? `Tu es VERIF-CM. Analyse cette image. Si medicament: verdict AUTHENTIQUE SUSPECT ou CONTREFAIT. Sinon: verdict SUSPECT. Reponds en francais. Max 1 element par tableau. Max 10 car par valeur. Conseil max 20 car. JSON UNE LIGNE:
-{"verdict":"AUTHENTIQUE","nom":"nom","fab":"fab","lot":"lot","exp":"date","pays":"pays","sec":["s1"],"ano":[],"sc":85,"al":false,"cs":"conseil court"}`
-      : `Tu es VERIF-CM. Analyse ce document. Verdict: AUTHENTIQUE SUSPECT ou FALSIFIE. Reponds en francais. Max 1 element par tableau. Max 10 car par valeur. Conseil max 20 car. JSON UNE LIGNE:
-{"verdict":"AUTHENTIQUE","type":"${selectedDocType}","inst":"inst","tit":"nom","ref":"ref","dt":"date","sec":["s1"],"ano":[],"sc":80,"al":false,"cs":"conseil court"}`;
+      ? `Tu es VERIF-CM, plateforme camerounaise de verification de medicaments. Analyse cette image. Si c'est un medicament: donne verdict AUTHENTIQUE SUSPECT ou CONTREFAIT avec tous les details visibles. Si ce n'est pas un medicament: verdict SUSPECT, anomalie "Image non medicamenteuse". Reponds UNIQUEMENT en JSON valide sur une seule ligne sans saut de ligne, en francais:
+{"verdict":"AUTHENTIQUE","nom":"nom complet produit","fab":"fabricant","lot":"numero lot","exp":"date peremption","pays":"pays origine","sec":["element securite 1"],"ano":[],"sc":85,"al":false,"cs":"conseil utile"}`
+      : `Tu es VERIF-CM, plateforme camerounaise de verification de documents officiels. Analyse ce document de type ${selectedDocType}. Si ce n'est pas ce type de document: verdict SUSPECT, anomalie "Type incorrect". Donne verdict AUTHENTIQUE SUSPECT ou FALSIFIE. Reponds UNIQUEMENT en JSON valide sur une seule ligne sans saut de ligne, en francais:
+{"verdict":"AUTHENTIQUE","type":"${selectedDocType}","inst":"institution emettrice","tit":"nom titulaire","ref":"numero reference","dt":"date emission","sec":["element securite 1"],"ano":[],"sc":80,"al":false,"cs":"conseil utile"}`;
 
     try {
       const response = await fetch('/api/analyze', {
